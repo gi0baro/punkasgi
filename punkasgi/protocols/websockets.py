@@ -244,11 +244,10 @@ class WebSocketConnection:
         }
         await self._queue_send.send({"type": "websocket.connect"})
 
-        reader_done = tonio.Event()
-        keepalive_done = tonio.Event()
+        # the scope joins both tasks on exit, cancelled before their first step included
         async with tonio.scope() as tasks:
-            tasks.spawn(self.run_reader(reader_done))
-            tasks.spawn(self.run_keepalive(keepalive_done))
+            tasks.spawn(self.run_reader())
+            tasks.spawn(self.run_keepalive())
             try:
                 await self.run_asgi()
                 if self.awaiting_close_reply and not self.transport_closed:
@@ -257,8 +256,6 @@ class WebSocketConnection:
             finally:
                 self._close()
                 tasks.cancel()
-        await reader_done.wait()
-        await keepalive_done.wait()
 
     def _claim_close(self, *, after_handshake=None, handshake_complete=False, awaiting_close_reply=False):
         # the one transition every close path takes: the caller that gets it sends the close
@@ -338,46 +335,43 @@ class WebSocketConnection:
         await self._queue_send.send(message)
         self._queue_send.close()
 
-    async def run_reader(self, done):
-        try:
-            while not self.transport_closed:
-                try:
-                    data = await self.transport.receive_some()
-                except Exception:
-                    data = b""
-                if not data:
-                    self._connection_lost()
+    async def run_reader(self):
+        while not self.transport_closed:
+            try:
+                data = await self.transport.receive_some()
+            except Exception:
+                data = b""
+            if not data:
+                self._connection_lost()
+                return
+            with self._lock:
+                self.conn.receive_data(data)
+                events = None if self.conn.parser_exc is not None else self.conn.events_received()
+            if events is None:
+                await self._handle_parser_exception()
+                return
+            for event in events:
+                if not isinstance(event, Frame):
+                    continue
+                opcode = event.opcode
+                if opcode is Opcode.TEXT or opcode is Opcode.BINARY:
+                    if event.fin:
+                        await self._deliver(event.data, opcode is Opcode.TEXT)
+                    else:
+                        self.frames = [event.data]
+                        self.frames_text = opcode is Opcode.TEXT
+                elif opcode is Opcode.CONT:
+                    self.frames.append(event.data)
+                    if event.fin:
+                        frames, self.frames = self.frames, None
+                        await self._deliver(b"".join(frames), self.frames_text)
+                elif opcode is Opcode.PING:
+                    await self._handle_ping()
+                elif opcode is Opcode.PONG:
+                    self._handle_pong(event)
+                elif opcode is Opcode.CLOSE:
+                    await self._handle_close()
                     return
-                with self._lock:
-                    self.conn.receive_data(data)
-                    events = None if self.conn.parser_exc is not None else self.conn.events_received()
-                if events is None:
-                    await self._handle_parser_exception()
-                    return
-                for event in events:
-                    if not isinstance(event, Frame):
-                        continue
-                    opcode = event.opcode
-                    if opcode is Opcode.TEXT or opcode is Opcode.BINARY:
-                        if event.fin:
-                            await self._deliver(event.data, opcode is Opcode.TEXT)
-                        else:
-                            self.frames = [event.data]
-                            self.frames_text = opcode is Opcode.TEXT
-                    elif opcode is Opcode.CONT:
-                        self.frames.append(event.data)
-                        if event.fin:
-                            frames, self.frames = self.frames, None
-                            await self._deliver(b"".join(frames), self.frames_text)
-                    elif opcode is Opcode.PING:
-                        await self._handle_ping()
-                    elif opcode is Opcode.PONG:
-                        self._handle_pong(event)
-                    elif opcode is Opcode.CLOSE:
-                        await self._handle_close()
-                        return
-        finally:
-            done.set()
 
     def _connection_lost(self):
         with self._lock:
@@ -447,37 +441,34 @@ class WebSocketConnection:
         self._enqueue_disconnect(self.conn.close_sent.code, self.conn.close_sent.reason)
         self._close()
 
-    async def run_keepalive(self, done):
-        try:
-            if not self.ping_interval or self.ping_interval <= 0:
+    async def run_keepalive(self):
+        if not self.ping_interval or self.ping_interval <= 0:
+            return
+        while not self._closing.is_set():
+            delay = max(0.0, self.ping_interval - self.last_ping_rtt)
+            await self._closing.wait(delay)
+            if self._closing.is_set():
                 return
-            while not self._closing.is_set():
-                delay = max(0.0, self.ping_interval - self.last_ping_rtt)
-                await self._closing.wait(delay)
-                if self._closing.is_set():
-                    return
-                if not self.handshake_complete:
-                    continue
-                # a random payload identifies this ping, so stale or unsolicited pongs are ignored
-                payload = struct.pack("!I", random.getrandbits(32))
-                with self._lock:
-                    self.pending_ping_payload = payload
-                    self.ping_sent_at = tonio.time.time()
-                try:
-                    await self._write(self.conn.send_ping, payload)
-                except ClientDisconnected:
-                    return
-                if self.ping_timeout is None:
-                    continue
-                await self._closing.wait(self.ping_timeout)
-                with self._lock:
-                    timed_out = self.pending_ping_payload is not None and not self._closing.is_set()
-                    self.pending_ping_payload = None
-                if timed_out:
-                    await self._keepalive_timeout()
-                    return
-        finally:
-            done.set()
+            if not self.handshake_complete:
+                continue
+            # a random payload identifies this ping, so stale or unsolicited pongs are ignored
+            payload = struct.pack("!I", random.getrandbits(32))
+            with self._lock:
+                self.pending_ping_payload = payload
+                self.ping_sent_at = tonio.time.time()
+            try:
+                await self._write(self.conn.send_ping, payload)
+            except ClientDisconnected:
+                return
+            if self.ping_timeout is None:
+                continue
+            await self._closing.wait(self.ping_timeout)
+            with self._lock:
+                timed_out = self.pending_ping_payload is not None and not self._closing.is_set()
+                self.pending_ping_payload = None
+            if timed_out:
+                await self._keepalive_timeout()
+                return
 
     async def _keepalive_timeout(self):
         if logger.level <= TRACE_LOG_LEVEL:
@@ -633,7 +624,7 @@ class WebSocketConnection:
                 response_headers.setdefault("Content-Length", str(len(body)))
                 response_headers.setdefault("Content-Type", "text/plain; charset=utf-8")
                 response = Response(status_code, STATUS_PHRASES[status_code], response_headers, body)
-                if not self._claim_close(after_handshake=False):
+                if not self._claim_close(after_handshake=False, handshake_complete=True):
                     raise ClientDisconnected()
                 self._enqueue_disconnect(1006)
                 self._closing.set()
