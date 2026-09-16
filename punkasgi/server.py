@@ -28,6 +28,42 @@ HANDLED_SIGNALS = (signal.SIGINT, signal.SIGTERM)
 logger = logging.getLogger("punkasgi.error")
 
 
+class _Inflight:
+    """Per-connection join for HTTP/2 stream handlers.
+
+    Handlers are spawned untracked (a tonio scope keeps a record for every child it ever
+    spawned until it exits, unbounded on a long-lived connection), so this is what the
+    connection loop waits on before the transport is closed. Every transition is under
+    one threading lock, so the drained event is set exactly once: by the last handler to
+    leave after the loop stopped accepting.
+    """
+
+    __slots__ = ("_lock", "_count", "_closing", "_drained")
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._count = 0
+        self._closing = False
+        self._drained = tonio.Event()
+
+    def enter(self):
+        with self._lock:
+            self._count += 1
+
+    def leave(self):
+        with self._lock:
+            self._count -= 1
+            if self._closing and not self._count:
+                self._drained.set()
+
+    async def join(self):
+        with self._lock:
+            self._closing = True
+            if not self._count:
+                return
+        await self._drained.wait()
+
+
 class Server:
     def __init__(self, config: Config) -> None:
         self.config = config
@@ -235,14 +271,20 @@ class Server:
 
     async def _serve_h2(self, server, info):
         handle = self._handle_h2
+        spawn = tonio.spawn.without_tracking
+        inflight = _Inflight()
         async with server:
-            async with tonio.scope() as handlers:
-                try:
-                    async for request in server:
-                        handlers.spawn(handle(request, info))
-                except BaseException:
-                    handlers.cancel()
-                    raise
+            try:
+                async for request in server:
+                    inflight.enter()
+                    spawn(handle(request, info, inflight))
+            finally:
+                # no cancel: when the iterator raises, httpunk has already failed the
+                # connection and woken every stream, so handlers unwind on their own.
+                # The join awaits in a `finally`, which only works because this task is
+                # never cancelled: it is spawned untracked, the graceful watcher awaits
+                # it inline, and the runtime drops (not cancels) parked tasks on exit
+                await inflight.join()
 
     async def _serve_h1(self, server, info):
         # what every request on the connection needs, bound once
@@ -264,13 +306,15 @@ class Server:
                     await websockets.handle(verdict.request, verdict.leftover, config, state, info, self.websockets)
                     break
 
-    async def _handle_h2(self, request, info):
+    async def _handle_h2(self, request, info, inflight):
         try:
             await http.handle(request, self.config, self.lifespan.state, info)
         except Exception as exc:
             logger.error("Exception in HTTP/2 request handler\n", exc_info=exc)
             with contextlib.suppress(Exception):
                 await request.reset()
+        finally:
+            inflight.leave()
 
     async def shutdown(self, sockets: list[socket.socket] | None = None) -> None:
         logger.info("Shutting down")
