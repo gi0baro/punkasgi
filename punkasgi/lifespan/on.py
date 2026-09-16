@@ -48,6 +48,7 @@ class LifespanOn:
         self.logger = logging.getLogger("punkasgi.error")
         self.startup_event = tonio.Event()
         self.shutdown_event = tonio.Event()
+        self.done = tonio.Event()
         self._sender, self._receiver = sync.channel.unbounded()
         self.error_occurred = False
         self.startup_failed = False
@@ -101,8 +102,11 @@ class LifespanOn:
                 msg = "Exception in 'lifespan' protocol\n"
                 self.logger.error(msg, exc_info=exc)
         finally:
+            # publish after every flag above is written: a waiter released by an
+            # event runs at once on another runtime thread
             self.startup_event.set()
             self.shutdown_event.set()
+            self.done.set()
 
     async def send(self, message):
         assert message["type"] in (
@@ -120,8 +124,8 @@ class LifespanOn:
         elif message["type"] == "lifespan.startup.failed":
             assert not self.startup_event.is_set(), STATE_TRANSITION_ERROR
             assert not self.shutdown_event.is_set(), STATE_TRANSITION_ERROR
-            self.startup_event.set()
             self.startup_failed = True
+            self.startup_event.set()
             if message.get("message"):
                 self.logger.error(message["message"])
 
@@ -133,8 +137,8 @@ class LifespanOn:
         elif message["type"] == "lifespan.shutdown.failed":
             assert self.startup_event.is_set(), STATE_TRANSITION_ERROR
             assert not self.shutdown_event.is_set(), STATE_TRANSITION_ERROR
-            self.shutdown_event.set()
             self.shutdown_failed = True
+            self.shutdown_event.set()
             if message.get("message"):
                 self.logger.error(message["message"])
 

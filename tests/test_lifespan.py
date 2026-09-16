@@ -146,6 +146,9 @@ async def test_lifespan_with_failed_startup(mode, raise_exception, caplog):
 
     await lifespan.startup()
     assert lifespan.startup_failed
+    # `error_occurred` is recorded by the lifespan task after the app raised, past
+    # the point where `startup.failed` released `startup()`: wait for the task
+    await lifespan.done.wait()
     assert lifespan.error_occurred is raise_exception
     assert lifespan.should_exit
     await lifespan.shutdown()
@@ -196,6 +199,7 @@ async def test_lifespan_with_failed_shutdown(mode, raise_exception, caplog):
     assert not lifespan.startup_failed
     await lifespan.shutdown()
     assert lifespan.shutdown_failed
+    await lifespan.done.wait()
     assert lifespan.error_occurred is raise_exception
     assert lifespan.should_exit
 
