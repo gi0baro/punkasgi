@@ -31,8 +31,8 @@ classifiers = [
 
 dependencies = [
     "click>=7.0",
-    "httpunk~=0.4.2",
-    "tonio~=0.9.17",
+    "httpunk~=0.4.4",
+    "tonio~=0.10.0",
     "websockets>=17",
 ]
 

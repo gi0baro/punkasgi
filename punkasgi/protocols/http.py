@@ -413,18 +413,23 @@ class RequestResponseCycle:
 
         # uvicorn parks here until the client leaves or the response completes,
         # and answers with a disconnect either way
-        if await tonio.select(self._client_gone(), self._response_done()):
+        if await self._client_gone():
             with self._lock:
                 self.state = _GONE
         return _DISCONNECT
 
     async def _client_gone(self):
+        # one suspension on both events, no racer tasks, no scope to cancel: what
+        # httpunk's `_send_async_body` does since 0.4.3; the flags afterwards are the verdict
+        request = self.request
         if self.h2:
-            with contextlib.suppress(Exception):
-                await self.request.reset_received()
-            return True
-        return await self.request.peer_closed()
-
-    async def _response_done(self):
-        await self.done.wait()
-        return False
+            reset = request._stream.reset_evt
+            await tonio.Waiter.any(self.done, reset)
+            return reset.is_set()
+        conn = request._conn
+        gone = conn.peer_closed_now(request._seq)
+        if gone is not None:
+            return gone
+        await conn._arm_watcher(request)  # the FIN is consumable now: park a read
+        await tonio.Waiter.any(self.done, request._peer_closed_evt)
+        return conn.peer_closed_flag(request._seq)

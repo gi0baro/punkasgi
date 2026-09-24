@@ -45,6 +45,31 @@ class FakeSendStream:
             raise RuntimeError("response body already complete")
 
 
+class _FakeH1Connection:
+    """The h1 connection behind httpunk's `Request.peer_closed()`: the bridge takes that
+    method apart to park on its event beside the cycle's own (`_client_gone`), so the
+    pieces are modelled here, every one of them over the request's `gone`."""
+
+    def __init__(self, request):
+        self._request = request
+
+    def peer_closed_now(self, seq):
+        return True if self._request.gone.is_set() else None
+
+    async def _arm_watcher(self, request):
+        pass
+
+    def peer_closed_flag(self, seq):
+        return self._request.gone.is_set()
+
+
+class _FakeH2Stream:
+    """The h2 stream behind `ServerRequest.reset_received()`: its `reset_evt`."""
+
+    def __init__(self, request):
+        self.reset_evt = request.gone
+
+
 class FakeRequest:
     def __init__(
         self,
@@ -84,6 +109,10 @@ class FakeRequest:
         self.detached = False
         # set by a test to have the client leave (h1 peer_closed / h2 reset_received)
         self.gone = tonio.Event()
+        self._conn = _FakeH1Connection(self)
+        self._seq = 0
+        self._peer_closed_evt = self.gone
+        self._stream = _FakeH2Stream(self)
 
     async def aiter_bytes(self):
         for chunk in self._body:
@@ -129,14 +158,6 @@ class FakeRequest:
     @property
     def response_complete(self):
         return self.responded is not None or (self.stream is not None and self.stream.done and not self.stream.reset)
-
-    async def peer_closed(self):
-        await self.gone.wait()
-        return True
-
-    async def reset_received(self):
-        await self.gone.wait()
-        return 8
 
     async def reset(self, error_code=None):
         self.reset_called = True
