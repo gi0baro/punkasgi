@@ -71,6 +71,15 @@ SSL_PROTOCOL_VERSION: int = ssl.PROTOCOL_TLS_SERVER
 
 STARTUP_FAILURE = 3
 
+MIN_DEFAULT_THREADS = 2
+BLOCKING_THREADS_FACTOR = 4
+
+
+def default_threads() -> int:
+    cpus = os.process_cpu_count() or MIN_DEFAULT_THREADS
+    return max(MIN_DEFAULT_THREADS, cpus - 2)
+
+
 LOGGING_CONFIG: dict[str, Any] = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -156,7 +165,6 @@ class Config:
         self.port = port
         self.uds = uds
         self.fd = fd
-        self.threads = threads
         self.http = http
         self.ws = ws
         self.ws_max_size = ws_max_size
@@ -196,7 +204,11 @@ class Config:
             load_dotenv(dotenv_path=env_file)
 
         if threads is None and "WEB_CONCURRENCY" in os.environ:
-            self.threads = int(os.environ["WEB_CONCURRENCY"])
+            threads = int(os.environ["WEB_CONCURRENCY"])
+        if threads is None:
+            threads = default_threads()
+        self.threads = threads
+        self.blocking_threads = threads * BLOCKING_THREADS_FACTOR
 
         self.forwarded_allow_ips: list[str] | str
         if forwarded_allow_ips is None:

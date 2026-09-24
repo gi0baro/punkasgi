@@ -84,11 +84,16 @@ class Server:
         config = self.config
         if not config.loaded:
             config.load()
-        threads = config.threads if config.threads and config.threads > 0 else None
         # tonio installs its signal handlers through the wakeup fd, a main-thread-only affair
         signals = list(HANDLED_SIGNALS) if threading.current_thread() is threading.main_thread() else []
         try:
-            tonio.run(self._run(sockets), context=True, signals=signals, threads=threads)
+            tonio.run(
+                self._run(sockets),
+                context=True,
+                signals=signals,
+                threads=config.threads,
+                blocking_threadpool_size=config.blocking_threads,
+            )
         finally:
             for captured_signal in reversed(self._captured_signals):
                 signal.raise_signal(captured_signal)

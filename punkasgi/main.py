@@ -97,7 +97,7 @@ def print_version(ctx, param, value):
     default=None,
     type=int,
     help="Number of runtime threads. Defaults to the $WEB_CONCURRENCY environment variable if available, "
-    "or the tonio runtime default (CPU count).",
+    "or the CPU count minus 2.",
 )
 @click.option("--http", type=HTTP_CHOICES, default="auto", help="HTTP protocol version.", show_default=True)
 @click.option("--ws/--no-ws", is_flag=True, default=True, help="Enable/Disable WebSocket upgrades.")

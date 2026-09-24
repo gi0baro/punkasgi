@@ -53,7 +53,7 @@ punkasgi.run("main:app", host="0.0.0.0", port=8000, threads=4)
 
 | option | note |
 |---|---|
-| `--threads` | size of the tonio runtime, defaults to `$WEB_CONCURRENCY` or the CPU count |
+| `--threads` | size of the tonio runtime, defaults to `$WEB_CONCURRENCY` or the CPU count minus 2 (at least 2) |
 | `--http auto\|h1\|h2` | protocol selection: `auto` sniffs the HTTP/2 preface on plain TCP and follows ALPN over TLS |
 | `--ws/--no-ws` | WebSocket upgrades on or off; with them off an upgrade request is answered 400 |
 | `--timeout-keep-alive` | hyper's head read timeout: it bounds the idle wait between requests together with the read of the next request head |
