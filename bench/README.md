@@ -2,12 +2,12 @@
 
 
 
-Run at: Thu 24 Sep 2026, 13:18    
+Run at: Fri 25 Sep 2026, 11:57    
 Environment: AMD Ryzen 7 5700X @ Gentoo Linux 6.18.48 (CPUs: 16)    
 CPython 3.14 free-threaded   
-punkasgi 0.1.2 (tonio 0.10.1, httpunk 0.4.4)   
+punkasgi 0.1.2 (tonio 0.10.1, httpunk 0.4.5)   
 Granian 2.8.3   
-Uvicorn 0.53.0    
+Uvicorn 0.54.0    
 
 ### Methodology
 
@@ -30,30 +30,30 @@ body, streamed back in the chunks the server delivers it in.
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 64 | 583285 | 58322 | 1.094ms | 1.208ms | 1.294ms |
-| punkasgi | 4 | 128 | 945293 | 94525 | 1.348ms | 1.595ms | 1.751ms |
-| punkasgi | 8 | 256 | 1417142 | 141673 | 1.798ms | 2.163ms | 3.343ms |
-| Granian | 2 | 64 | 1829334 | 182895 | 0.348ms | 0.542ms | 0.721ms |
-| Granian | 4 | 128 | 2614965 | 261416 | 0.487ms | 0.99ms | 1.457ms |
-| Granian | 8 | 256 | 2602680 | 260171 | 0.976ms | 2.278ms | 3.077ms |
-| Uvicorn zttp | 2 | 64 | 738488 | 73835 | 0.864ms | 0.985ms | 1.059ms |
-| Uvicorn zttp | 4 | 128 | 1265242 | 126495 | 1.008ms | 1.506ms | 1.817ms |
-| Uvicorn zttp | 8 | 256 | 1770345 | 176975 | 1.436ms | 2.128ms | 3.269ms |
+| punkasgi | 2 | 64 | 609251 | 60921 | 1.047ms | 1.155ms | 1.247ms |
+| punkasgi | 4 | 128 | 994816 | 99457 | 1.281ms | 1.481ms | 1.626ms |
+| punkasgi | 8 | 256 | 1496001 | 149554 | 1.699ms | 2.173ms | 3.158ms |
+| Granian | 2 | 64 | 1805691 | 180526 | 0.352ms | 0.561ms | 0.796ms |
+| Granian | 4 | 128 | 2576529 | 257559 | 0.494ms | 1.001ms | 1.469ms |
+| Granian | 8 | 256 | 2558164 | 255750 | 0.995ms | 2.357ms | 3.135ms |
+| Uvicorn zttp | 2 | 64 | 732290 | 73207 | 0.871ms | 1.175ms | 1.388ms |
+| Uvicorn zttp | 4 | 128 | 1244538 | 124416 | 1.023ms | 1.675ms | 2.203ms |
+| Uvicorn zttp | 8 | 256 | 1774419 | 177393 | 1.434ms | 1.987ms | 3.016ms |
 
 
 #### echo 10KB (iter)
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 64 | 369899 | 36990 | 1.725ms | 1.955ms | 2.38ms |
-| punkasgi | 4 | 128 | 621831 | 62178 | 2.05ms | 2.624ms | 3.009ms |
-| punkasgi | 8 | 256 | 959954 | 95990 | 2.652ms | 3.22ms | 4.614ms |
-| Granian | 2 | 64 | 923429 | 92326 | 0.69ms | 1.124ms | 1.415ms |
-| Granian | 4 | 128 | 1326951 | 132672 | 0.96ms | 1.864ms | 2.604ms |
-| Granian | 8 | 256 | 1298394 | 129819 | 1.963ms | 4.165ms | 5.323ms |
-| Uvicorn zttp | 2 | 64 | 558259 | 55823 | 1.143ms | 1.585ms | 1.854ms |
-| Uvicorn zttp | 4 | 128 | 955852 | 95564 | 1.333ms | 2.635ms | 3.215ms |
-| Uvicorn zttp | 8 | 256 | 1390513 | 139023 | 1.83ms | 2.674ms | 4.113ms |
+| punkasgi | 2 | 64 | 392032 | 39204 | 1.629ms | 1.828ms | 2.087ms |
+| punkasgi | 4 | 128 | 634333 | 63435 | 2.008ms | 2.341ms | 2.49ms |
+| punkasgi | 8 | 256 | 1001047 | 100098 | 2.545ms | 3.384ms | 4.994ms |
+| Granian | 2 | 64 | 932870 | 93263 | 0.683ms | 1.01ms | 1.394ms |
+| Granian | 4 | 128 | 1313015 | 131279 | 0.97ms | 1.87ms | 2.632ms |
+| Granian | 8 | 256 | 1289594 | 128925 | 1.973ms | 4.153ms | 5.168ms |
+| Uvicorn zttp | 2 | 64 | 567854 | 56785 | 1.124ms | 1.657ms | 1.7ms |
+| Uvicorn zttp | 4 | 128 | 979289 | 97904 | 1.302ms | 2.367ms | 2.758ms |
+| Uvicorn zttp | 8 | 256 | 1396651 | 139643 | 1.822ms | 3.316ms | 3.88ms |
 
 
 ### HTTP/2
@@ -65,30 +65,30 @@ Uvicorn with `--http zttp --http2`; the client uses HTTP/2 prior knowledge over 
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 64 | 716148 | 71620 | 3.567ms | 3.854ms | 4.467ms |
-| punkasgi | 4 | 128 | 1134491 | 113455 | 4.489ms | 5.236ms | 5.574ms |
-| punkasgi | 8 | 256 | 1624429 | 162441 | 6.223ms | 7.118ms | 8.594ms |
-| Granian | 2 | 64 | 2050648 | 204999 | 1.243ms | 1.666ms | 2.166ms |
-| Granian | 4 | 128 | 2714477 | 271366 | 1.873ms | 3.998ms | 5.203ms |
-| Granian | 8 | 256 | 2576317 | 257531 | 3.942ms | 8.682ms | 10.947ms |
-| Uvicorn zttp | 2 | 64 | 541400 | 54195 | 4.71ms | 9.176ms | 9.346ms |
-| Uvicorn zttp | 4 | 128 | 1009394 | 101021 | 5.043ms | 8.425ms | 9.268ms |
-| Uvicorn zttp | 8 | 256 | 1364713 | 136559 | 7.429ms | 14.372ms | 15.324ms |
+| punkasgi | 2 | 64 | 697047 | 69710 | 3.665ms | 4.23ms | 4.625ms |
+| punkasgi | 4 | 128 | 1128619 | 112852 | 4.505ms | 5.144ms | 5.641ms |
+| punkasgi | 8 | 256 | 1606728 | 160661 | 6.306ms | 7.294ms | 9.767ms |
+| Granian | 2 | 64 | 2061027 | 206043 | 1.237ms | 1.643ms | 2.169ms |
+| Granian | 4 | 128 | 2705754 | 270462 | 1.883ms | 3.974ms | 5.159ms |
+| Granian | 8 | 256 | 2579937 | 257897 | 3.941ms | 8.71ms | 11.221ms |
+| Uvicorn zttp | 2 | 64 | 540746 | 54121 | 4.722ms | 8.214ms | 9.393ms |
+| Uvicorn zttp | 4 | 128 | 987120 | 98804 | 5.152ms | 11.409ms | 13.737ms |
+| Uvicorn zttp | 8 | 256 | 1356864 | 135751 | 7.479ms | 11.88ms | 13.424ms |
 
 
 #### echo 10KB (iter)
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 64 | 561928 | 56191 | 4.541ms | 5.155ms | 5.625ms |
-| punkasgi | 4 | 128 | 935102 | 93540 | 5.451ms | 6.294ms | 6.854ms |
-| punkasgi | 8 | 256 | 1257147 | 125713 | 8.075ms | 9.441ms | 12.059ms |
-| Granian | 2 | 64 | 974374 | 97432 | 2.619ms | 3.298ms | 4.078ms |
-| Granian | 4 | 128 | 1321312 | 132128 | 3.854ms | 6.805ms | 8.45ms |
-| Granian | 8 | 256 | 1211623 | 121107 | 8.375ms | 15.883ms | 19.431ms |
-| Uvicorn zttp | 2 | 64 | 453167 | 45361 | 5.63ms | 8.297ms | 11.962ms |
-| Uvicorn zttp | 4 | 128 | 786348 | 78710 | 6.475ms | 12.388ms | 14.026ms |
-| Uvicorn zttp | 8 | 256 | 1059549 | 106010 | 9.576ms | 17.02ms | 17.949ms |
+| punkasgi | 2 | 64 | 542322 | 54244 | 4.706ms | 5.131ms | 5.484ms |
+| punkasgi | 4 | 128 | 896078 | 89611 | 5.692ms | 6.432ms | 7.2ms |
+| punkasgi | 8 | 256 | 1276762 | 127684 | 7.947ms | 9.313ms | 11.23ms |
+| Granian | 2 | 64 | 976148 | 97607 | 2.612ms | 3.449ms | 3.855ms |
+| Granian | 4 | 128 | 1323255 | 132310 | 3.843ms | 6.829ms | 8.726ms |
+| Granian | 8 | 256 | 1204388 | 120431 | 8.439ms | 16.09ms | 19.888ms |
+| Uvicorn zttp | 2 | 64 | 447317 | 44772 | 5.7ms | 7.162ms | 7.571ms |
+| Uvicorn zttp | 4 | 128 | 777048 | 77786 | 6.554ms | 12.685ms | 14.353ms |
+| Uvicorn zttp | 8 | 256 | 1047107 | 104765 | 9.658ms | 17.134ms | 18.186ms |
 
 
 ### Files
@@ -98,15 +98,15 @@ byte string.
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 64 | 263019 | 26304 | 2.426ms | 2.981ms | 3.328ms |
-| punkasgi | 4 | 128 | 401791 | 40181 | 3.176ms | 3.702ms | 3.894ms |
-| punkasgi | 8 | 256 | 486343 | 48643 | 5.232ms | 7.784ms | 8.267ms |
-| Granian | 2 | 64 | 912540 | 91235 | 0.698ms | 1.077ms | 1.355ms |
-| Granian | 4 | 128 | 1247129 | 124694 | 1.021ms | 1.425ms | 1.844ms |
-| Granian | 8 | 256 | 1377428 | 137716 | 1.846ms | 4.046ms | 5.583ms |
-| Uvicorn zttp | 2 | 64 | 354626 | 35462 | 1.8ms | 2.053ms | 2.755ms |
-| Uvicorn zttp | 4 | 128 | 651756 | 65170 | 1.956ms | 3.752ms | 4.44ms |
-| Uvicorn zttp | 8 | 256 | 961656 | 96149 | 2.649ms | 4.191ms | 5.794ms |
+| punkasgi | 2 | 64 | 273166 | 27315 | 2.336ms | 2.806ms | 3.01ms |
+| punkasgi | 4 | 128 | 405078 | 40514 | 3.149ms | 3.662ms | 3.82ms |
+| punkasgi | 8 | 256 | 501254 | 50133 | 5.08ms | 7.505ms | 7.98ms |
+| Granian | 2 | 64 | 901399 | 90132 | 0.707ms | 1.029ms | 1.197ms |
+| Granian | 4 | 128 | 1248077 | 124764 | 1.02ms | 1.325ms | 1.761ms |
+| Granian | 8 | 256 | 1386265 | 138603 | 1.833ms | 4.004ms | 5.475ms |
+| Uvicorn zttp | 2 | 64 | 358914 | 35892 | 1.78ms | 2.527ms | 2.564ms |
+| Uvicorn zttp | 4 | 128 | 653175 | 65302 | 1.952ms | 3.889ms | 4.654ms |
+| Uvicorn zttp | 8 | 256 | 966608 | 96640 | 2.634ms | 4.367ms | 5.682ms |
 
 
 ### Long I/O
@@ -115,15 +115,15 @@ Plain-text responses after a simulated I/O wait of 10ms.
 
 | Server | Threads / workers | Concurrency | Total requests | RPS | avg latency | p99 latency | p99.9 latency |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | 2 | 256 | 231367 | 23157 | 11.02ms | 12.149ms | 12.634ms |
-| punkasgi | 4 | 512 | 464781 | 46510 | 10.926ms | 12.104ms | 18.174ms |
-| punkasgi | 8 | 1024 | 905730 | 90605 | 10.74ms | 12.373ms | 25.949ms |
-| Granian | 2 | 256 | 214464 | 21465 | 11.871ms | 12.508ms | 13.028ms |
-| Granian | 4 | 512 | 424464 | 42471 | 11.969ms | 12.855ms | 13.944ms |
-| Granian | 8 | 1024 | 817611 | 81803 | 11.933ms | 13.192ms | 19.508ms |
-| Uvicorn zttp | 2 | 256 | 205642 | 20582 | 12.374ms | 14.839ms | 16.198ms |
-| Uvicorn zttp | 4 | 512 | 378850 | 37913 | 13.419ms | 15.674ms | 17.325ms |
-| Uvicorn zttp | 8 | 1024 | 667768 | 66836 | 14.543ms | 17.493ms | 22.816ms |
+| punkasgi | 2 | 256 | 232260 | 23243 | 10.965ms | 11.902ms | 12.419ms |
+| punkasgi | 4 | 512 | 471851 | 47214 | 10.765ms | 12.105ms | 13.392ms |
+| punkasgi | 8 | 1024 | 912465 | 91259 | 10.702ms | 12.545ms | 31.2ms |
+| Granian | 2 | 256 | 214581 | 21477 | 11.859ms | 12.546ms | 13.03ms |
+| Granian | 4 | 512 | 427671 | 42799 | 11.894ms | 12.86ms | 13.867ms |
+| Granian | 8 | 1024 | 818322 | 81873 | 11.904ms | 13.15ms | 17.488ms |
+| Uvicorn zttp | 2 | 256 | 187100 | 18729 | 13.626ms | 15.447ms | 17.114ms |
+| Uvicorn zttp | 4 | 512 | 369828 | 37014 | 13.745ms | 16.306ms | 18.769ms |
+| Uvicorn zttp | 8 | 1024 | 675065 | 67571 | 14.389ms | 17.181ms | 21.546ms |
 
 
 ### WebSockets
@@ -136,21 +136,21 @@ Granian (with `--runtime-threads 2`) and Uvicorn run a single worker.
 
 | Clients | Server | Threads / workers | Receive throughput | Combined throughput |
 | --- | --- | --- | --- | --- |
-| 16 | punkasgi | 2 | 205662 | 218516 |
-| 16 | punkasgi | 4 | 255039 | 270979 |
-| 16 | punkasgi | 8 | 253487 | 269330 |
-| 16 | Granian | 1 | 253152 | 268974 |
-| 16 | Uvicorn zttp | 1 | 115074 | 122266 |
-| 32 | punkasgi | 2 | 232368 | 239629 |
-| 32 | punkasgi | 4 | 262436 | 270637 |
-| 32 | punkasgi | 8 | 252386 | 260273 |
-| 32 | Granian | 1 | 253962 | 261899 |
-| 32 | Uvicorn zttp | 1 | 113367 | 116910 |
-| 64 | punkasgi | 2 | 257203 | 261221 |
-| 64 | punkasgi | 4 | 261462 | 265547 |
-| 64 | punkasgi | 8 | 265762 | 269914 |
-| 64 | Granian | 1 | 250492 | 254406 |
-| 64 | Uvicorn zttp | 1 | 116406 | 118225 |
+| 16 | punkasgi | 2 | 210124 | 223257 |
+| 16 | punkasgi | 4 | 256538 | 272572 |
+| 16 | punkasgi | 8 | 255590 | 271565 |
+| 16 | Granian | 1 | 255531 | 271501 |
+| 16 | Uvicorn zttp | 1 | 112209 | 119222 |
+| 32 | punkasgi | 2 | 237529 | 244951 |
+| 32 | punkasgi | 4 | 265415 | 273709 |
+| 32 | punkasgi | 8 | 259790 | 267908 |
+| 32 | Granian | 1 | 253618 | 261544 |
+| 32 | Uvicorn zttp | 1 | 111509 | 114994 |
+| 64 | punkasgi | 2 | 263699 | 267820 |
+| 64 | punkasgi | 4 | 263848 | 267971 |
+| 64 | punkasgi | 8 | 263304 | 267418 |
+| 64 | Granian | 1 | 253258 | 257215 |
+| 64 | Uvicorn zttp | 1 | 112398 | 114155 |
 
 
 ### Resources
@@ -162,10 +162,10 @@ any traffic.
 
 | Server | Benchmark | RPS | CPU per request | CPU | Idle memory | Peak memory |
 | --- | --- | --- | --- | --- | --- | --- |
-| punkasgi | HTTP/1.1 echo 10KB (iter) | 95990 | 77.9µs | 728% | 60.8MB | 163.8MB |
-| Granian | HTTP/1.1 echo 10KB (iter) | 129819 | 77.1µs | 971% | 53.3MB | 92.8MB |
-| Uvicorn zttp | HTTP/1.1 echo 10KB (iter) | 139023 | 50.2µs | 675% | 222.5MB | 237.4MB |
-| punkasgi | HTTP/2 echo 10KB (iter) | 125713 | 60.6µs | 739% | 60.9MB | 154.9MB |
-| Granian | HTTP/2 echo 10KB (iter) | 121107 | 85.9µs | 1002% | 53.5MB | 149.4MB |
-| Uvicorn zttp | HTTP/2 echo 10KB (iter) | 106010 | 66.1µs | 679% | 223.2MB | 287.2MB |
+| punkasgi | HTTP/1.1 echo 10KB (iter) | 100098 | 74.3µs | 721% | 60.9MB | 81.7MB |
+| Granian | HTTP/1.1 echo 10KB (iter) | 128925 | 77.6µs | 969% | 53.3MB | 93.7MB |
+| Uvicorn zttp | HTTP/1.1 echo 10KB (iter) | 139643 | 49.9µs | 674% | 221.9MB | 235.4MB |
+| punkasgi | HTTP/2 echo 10KB (iter) | 127684 | 59.9µs | 741% | 61.1MB | 155.2MB |
+| Granian | HTTP/2 echo 10KB (iter) | 120431 | 87.1µs | 1013% | 55.4MB | 151.1MB |
+| Uvicorn zttp | HTTP/2 echo 10KB (iter) | 104765 | 66.8µs | 682% | 222.7MB | 286.8MB |
 
